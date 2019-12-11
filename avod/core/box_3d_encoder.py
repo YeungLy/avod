@@ -209,9 +209,12 @@ def anchors_to_box_3d(anchors, fix_lw=False):
             masked_original_ry = tf.multiply(box_3d_ry, swap_idx_booleans)
             masked_orientation = tf.add(masked_new_ry, masked_original_ry)
 
-            box_3d_l = tf.squeeze(masked_dimz)
-            box_3d_w = tf.squeeze(masked_dimx)
-            box_3d_ry = tf.squeeze(masked_orientation)
+            #box_3d_l = tf.squeeze(masked_dimz)  #there might be one anchor.. squeeze it making shape to zero.
+            box_3d_l = tf.reshape(masked_dimz, [-1,])
+            #box_3d_w = tf.squeeze(masked_dimx)
+            box_3d_w = tf.reshape(masked_dimx, [-1,])
+            #box_3d_ry = tf.squeeze(masked_orientation)
+            box_3d_ry = tf.reshape(masked_orientation, [-1,])
 
         box_3d = tf.stack([box_3d_x, box_3d_y, box_3d_z,
                            box_3d_l, box_3d_w, box_3d_h, box_3d_ry],

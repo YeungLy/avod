@@ -9,7 +9,11 @@ from avod.builders.dataset_builder import DatasetBuilder
 def do_preprocessing(dataset, indices):
 
     mini_batch_utils = dataset.kitti_utils.mini_batch_utils
-
+    #for testing code
+    #temp_dir = mini_batch_utils.mini_batch_dir
+    #temp_dir = temp_dir.split('mini_batches')
+    #temp_dir = temp_dir[0] + 'mini_batches_using_pred_anchors' + temp_dir[1]
+    #mini_batch_utils.mini_batch_dir = temp_dir
     print("Generating mini batches in {}".format(
         mini_batch_utils.mini_batch_dir))
 
@@ -85,24 +89,38 @@ def main(dataset=None):
         do_preprocessing(dataset, None)
         return
 
+    #car_dataset_config_path = avod.root_dir() + \
+    #    '/configs/mb_preprocessing/rpn_cars.config'
+    #ped_dataset_config_path = avod.root_dir() + \
+    #    '/configs/mb_preprocessing/rpn_pedestrians.config'
+    #cyc_dataset_config_path = avod.root_dir() + \
+    #    '/configs/mb_preprocessing/rpn_cyclists.config'
+    #ppl_dataset_config_path = avod.root_dir() + \
+    #    '/configs/mb_preprocessing/rpn_people.config'
+
+    #for testing code
     car_dataset_config_path = avod.root_dir() + \
-        '/configs/mb_preprocessing/rpn_cars.config'
+        '/configs/mb_train/rpn_cars.config'
     ped_dataset_config_path = avod.root_dir() + \
-        '/configs/mb_preprocessing/rpn_pedestrians.config'
+        '/configs/mb_train/rpn_pedestrians.config'
     cyc_dataset_config_path = avod.root_dir() + \
-        '/configs/mb_preprocessing/rpn_cyclists.config'
+        '/configs/mb_train/rpn_cyclists.config'
     ppl_dataset_config_path = avod.root_dir() + \
-        '/configs/mb_preprocessing/rpn_people.config'
+        '/configs/mb_train/rpn_people.config'
+
+
 
     ##############################
     # Options
     ##############################
     # Serial vs parallel processing
     in_parallel = True
+    #in_parallel = False
 
     process_car = True   # Cars
     process_ped = False  # Pedestrians
     process_cyc = False  # Cyclists
+    #process_ppl = False   # People (Pedestrians + Cyclists)
     process_ppl = True   # People (Pedestrians + Cyclists)
 
     # Number of child processes to fork, samples will

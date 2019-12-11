@@ -1,4 +1,4 @@
-# import cv2
+import cv2
 import numpy as np
 import os
 
@@ -12,6 +12,7 @@ from avod.core import anchor_encoder
 from avod.core import anchor_filter
 
 from avod.core.anchor_generators import grid_anchor_3d_generator
+from avod.core.anchor_generators import pred_anchor_3d_generator
 
 
 class MiniBatchPreprocessor(object):
@@ -41,6 +42,9 @@ class MiniBatchPreprocessor(object):
 
         self._area_extents = self._dataset.kitti_utils.area_extents
         self._anchor_strides = anchor_strides
+        self._use_grid_anchors = self._dataset.kitti_utils.use_grid_anchors 
+        self._pred_anchors_dir = self._dataset.kitti_utils.pred_anchors_dir
+        print('[mini_batches_preprocessor.py] use grid anchors: {}, else pred anchors dir: {} '.format(self._use_grid_anchors, self._pred_anchors_dir))
 
         self._density_threshold = density_threshold
         self._negative_iou_range = neg_iou_3d_range
@@ -158,6 +162,7 @@ class MiniBatchPreprocessor(object):
             all_info[update_indices,
                      self.mini_batch_utils.col_class_idx] = class_idx
 
+
         return all_info
 
     def preprocess(self, indices):
@@ -183,7 +188,10 @@ class MiniBatchPreprocessor(object):
         # Get clusters for class
         all_clusters_sizes, _ = dataset.get_cluster_info()
 
-        anchor_generator = grid_anchor_3d_generator.GridAnchor3dGenerator()
+        if self._use_grid_anchors:
+            anchor_generator = grid_anchor_3d_generator.GridAnchor3dGenerator()
+        else:
+            anchor_generator = pred_anchor_3d_generator.PredAnchor3dGenerator()
 
         # Load indices of data_split
         all_samples = dataset.sample_list
@@ -201,7 +209,7 @@ class MiniBatchPreprocessor(object):
             # Check for existing files and skip to the next
             if self._check_for_existing(classes_name, anchor_strides,
                                         sample_name):
-                print("{} / {}: Sample already preprocessed".format(
+                print("{} / {}: Sample {} already preprocessed".format(
                     sample_idx + 1, num_samples, sample_name))
                 continue
 
@@ -243,20 +251,29 @@ class MiniBatchPreprocessor(object):
             # Create anchors for each class
             for class_idx in range(len(dataset.classes)):
                 # Generate anchors for all classes
-                grid_anchor_boxes_3d = anchor_generator.generate(
-                    area_3d=self._area_extents,
-                    anchor_3d_sizes=all_clusters_sizes[class_idx],
-                    anchor_stride=self._anchor_strides[class_idx],
-                    ground_plane=ground_plane)
+                if self._use_grid_anchors:
+                    grid_anchor_boxes_3d = anchor_generator.generate(
+                        area_3d=self._area_extents,
+                        anchor_3d_sizes=all_clusters_sizes[class_idx],
+                        anchor_stride=self._anchor_strides[class_idx],
+                        ground_plane=ground_plane)
 
-                all_anchor_boxes_3d.extend(grid_anchor_boxes_3d)
+                    all_anchor_boxes_3d.extend(grid_anchor_boxes_3d)
+                else:
+                    pred_anchor_boxes_3d = anchor_generator.generate(sample_name=sample_name, class_name=dataset.classes[class_idx], pred_anchors_dir=self._pred_anchors_dir)
+                    all_anchor_boxes_3d.extend(pred_anchor_boxes_3d)
+
+
 
             # Filter empty anchors
+            # empty means no pointcloud at this anchor, use vx_grid_2d to help filtering.
             all_anchor_boxes_3d = np.asarray(all_anchor_boxes_3d)
             anchors = box_3d_encoder.box_3d_to_anchor(all_anchor_boxes_3d)
+       
             empty_anchor_filter = anchor_filter.get_empty_anchor_filter_2d(
                 anchors, vx_grid_2d, self._density_threshold)
 
+            #print('[preprocsess] non empty anchor: {}'.format(np.sum(empty_anchor_filter)))
             # Calculate anchor info
             anchors_info = self._calculate_anchors_info(
                 all_anchor_boxes_3d, empty_anchor_filter, filtered_gt_list)

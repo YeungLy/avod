@@ -103,6 +103,8 @@ class Box3dEncoderTest(unittest.TestCase):
                                  [-0.59, 1.90, 25.01, 3.2, 1.61, 1.66, -1.57]],
                                 dtype=np.float32)
 
+        anchors = anchors[1:]
+        exp_3d_box = exp_3d_box[1:]
         anchor_tensors = tf.convert_to_tensor(anchors, dtype=tf.float32)
 
         boxes_3d = \
@@ -138,3 +140,7 @@ class Box3dEncoderTest(unittest.TestCase):
             np.testing.assert_almost_equal(
                 anchors_out, exp_anchors, decimal=2,
                 err_msg='Wrong tensor anchor to box3D format')
+
+
+if __name__ == "__main__":
+    unittest.main()            

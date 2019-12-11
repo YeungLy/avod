@@ -12,6 +12,10 @@ message KittiUtilsConfig {
     // Anchor strides
     repeated float anchor_strides = 3;
 
+    optional bool use_grid_anchors = 5 [default = true];
+
+    optional string pred_anchors_dir = 6;
+
     // Anchor filtering density threshold
     optional int32 density_threshold = 4 [default = 1];
 

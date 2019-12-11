@@ -33,6 +33,8 @@ class KittiUtils(object):
 
         # Parse config
         self.config = dataset.config.kitti_utils_config
+        self.use_grid_anchors = self.config.use_grid_anchors
+        self.pred_anchors_dir = self.config.pred_anchors_dir
         self.area_extents = np.reshape(self.config.area_extents, (3, 2))
         self.bev_extents = self.area_extents[[0, 2]]
         self.voxel_size = self.config.voxel_size

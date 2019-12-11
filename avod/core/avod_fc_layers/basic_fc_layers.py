@@ -116,9 +116,14 @@ def _basic_fc_layers(num_layers, layer_sizes,
         weights_regularizer = None
 
     # Feature fusion
-    fused_features = avod_fc_layer_utils.feature_fusion(fusion_method,
-                                                        input_rois,
-                                                        input_weights)
+    if fusion_method == 'None':
+        fused_features = input_rois[0]
+    else:
+        fused_features = avod_fc_layer_utils.feature_fusion(fusion_method,
+                                                            input_rois,
+                                                            input_weights)
+         
+
     output_names = ['cls', 'off', 'ang']
     cls_logits = None
     offsets = None
