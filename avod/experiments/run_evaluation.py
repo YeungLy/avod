@@ -13,7 +13,10 @@ import avod.builders.config_builder_util as config_builder
 from avod.builders.dataset_builder import DatasetBuilder
 from avod.core.models.avod_model import AvodModel
 from avod.core.models.rpn_model import RpnModel
+from avod.core.models.avod_model_bev import AvodModelBev
+from avod.core.models.rpn_model_bev import RpnModelBev
 from avod.core.evaluator import Evaluator
+from avod.core.evaluator_bev import EvaluatorBev
 
 
 def evaluate(model_config, eval_config, dataset_config):
@@ -39,7 +42,7 @@ def evaluate(model_config, eval_config, dataset_config):
         elif eval_mode == 'test':
             dataset_config.has_labels = False
 
-    elif data_split == 'test':
+    elif data_split == 'test' or data_split== 'test_at_val':
         dataset_config.data_split_dir = 'testing'
         dataset_config.has_labels = False
 
@@ -72,12 +75,24 @@ def evaluate(model_config, eval_config, dataset_config):
         elif model_name == 'rpn_model':
             model = RpnModel(model_config, train_val_test=eval_mode,
                              dataset=dataset)
+        elif model_name == 'avod_model_bev':
+            model = AvodModelBev(model_config, train_val_test=eval_mode,
+                              dataset=dataset)
+        elif model_name == 'rpn_model_bev':
+            model = RpnModelBev(model_config, train_val_test=eval_mode,
+                             dataset=dataset)
         else:
             raise ValueError('Invalid model name {}'.format(model_name))
 
-        model_evaluator = Evaluator(model,
+        if model_name.find('bev') != -1:
+            model_evaluator = EvaluatorBev(model,
                                     dataset_config,
                                     eval_config)
+        else:
+            model_evaluator = Evaluator(model,
+                                    dataset_config,
+                                    eval_config)
+            
 
         if evaluate_repeatedly:
             model_evaluator.repeated_checkpoint_run()

@@ -24,6 +24,7 @@ class DatasetBuilder(object):
         num_clusters=[2, 1, 1],
     )
 
+
     KITTI_TRAIN = KittiDatasetConfig(
         name="kitti",
         data_split="train",
@@ -36,6 +37,7 @@ class DatasetBuilder(object):
 
     KITTI_VAL = KittiDatasetConfig(
         name="kitti",
+        #dataset_dir = "/home/amax_yly/Dataset/kitti",
         data_split="val",
         data_split_dir="training",
         has_labels=True,
@@ -44,6 +46,16 @@ class DatasetBuilder(object):
         num_clusters=[2],
     )
 
+    KITTI_TEST_AT_VAL = KittiDatasetConfig(
+        name="kitti",
+        dataset_dir="/home/amax_yly/Dataset/kitti",
+        data_split="test_at_val",
+        data_split_dir="training",
+        has_labels=True,
+        cluster_split="train",
+        classes=["Car", "Pedestrian", "Cyclist"],
+        num_clusters=[2, 1, 1],
+    )
     KITTI_TEST = KittiDatasetConfig(
         name="kitti",
         data_split="test",

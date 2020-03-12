@@ -118,6 +118,7 @@ class MiniBatchPreprocessor(object):
         # Update anchor indices
         all_info[:, self.mini_batch_utils.col_anchor_indices] = anchor_indices
 
+        gt_matched = np.zeros((len(all_info),)) - 1
         # For each of the labels, generate samples
         for gt_idx in range(len(gt_labels)):
 
@@ -137,6 +138,10 @@ class MiniBatchPreprocessor(object):
             # Only update indices with a higher iou than before
             update_indices = np.greater(
                 ious, all_info[:, self.mini_batch_utils.col_ious])
+            
+            #update matched gt idx for anchor
+            gt_matched[update_indices] = gt_idx
+            
 
             # Get ious to update
             ious_to_update = ious[update_indices]
@@ -162,8 +167,10 @@ class MiniBatchPreprocessor(object):
             all_info[update_indices,
                      self.mini_batch_utils.col_class_idx] = class_idx
 
-
+        gt_matched = np.unique(gt_matched)
+        gt_matched = gt_matched[gt_matched >= 0]
         return all_info
+        #return all_info, gt_matched 
 
     def preprocess(self, indices):
         """Preprocesses anchor info and saves info to files
@@ -260,7 +267,10 @@ class MiniBatchPreprocessor(object):
 
                     all_anchor_boxes_3d.extend(grid_anchor_boxes_3d)
                 else:
-                    pred_anchor_boxes_3d = anchor_generator.generate(sample_name=sample_name, class_name=dataset.classes[class_idx], pred_anchors_dir=self._pred_anchors_dir)
+                    pred_anchor_boxes_3d = anchor_generator.generate(
+                        sample_name=sample_name, 
+                        class_name=dataset.classes[class_idx], 
+                        pred_anchors_dir=self._pred_anchors_dir)
                     all_anchor_boxes_3d.extend(pred_anchor_boxes_3d)
 
 
@@ -275,6 +285,7 @@ class MiniBatchPreprocessor(object):
 
             #print('[preprocsess] non empty anchor: {}'.format(np.sum(empty_anchor_filter)))
             # Calculate anchor info
+            #anchors_info, gt_matched = self._calculate_anchors_info(
             anchors_info = self._calculate_anchors_info(
                 all_anchor_boxes_3d, empty_anchor_filter, filtered_gt_list)
 

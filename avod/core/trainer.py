@@ -112,6 +112,10 @@ def train(model, train_config):
         # GPU memory config
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = allow_gpu_mem_growth
+        device_list='0,1,2,3'
+        #config.gpu_options.visible_device_list = device_list
+        #config.device_count['GPU'] = len(device_list.split(','))
+        #config.allow_soft_placement = True
         sess = tf.Session(config=config)
     else:
         sess = tf.Session()

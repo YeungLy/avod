@@ -442,9 +442,12 @@ def tf_box_4c_to_box_3d(boxes_4c, ground_plane):
     centroid_z = centroid_xz[:, 1]
 
     # Squeeze to single dimension for stacking
-    length_out = tf.squeeze(length_out)
-    width_out = tf.squeeze(width_out)
-    ry_out = tf.squeeze(ry_out)
+    length_out = tf.reshape(length_out, [-1,])
+    #length_out = tf.squeeze(length_out)
+    width_out = tf.reshape(width_out, [-1,])
+    #width_out = tf.squeeze(width_out)
+    ry_out = tf.reshape(ry_out, [-1,])
+    #ry_out = tf.squeeze(ry_out)
 
     ground_y = -(a * centroid_x + c * centroid_z + d) / b
 

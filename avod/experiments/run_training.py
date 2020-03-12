@@ -13,6 +13,8 @@ import avod.builders.config_builder_util as config_builder
 from avod.builders.dataset_builder import DatasetBuilder
 from avod.core.models.avod_model import AvodModel
 from avod.core.models.rpn_model import RpnModel
+from avod.core.models.avod_model_bev import AvodModelBev
+from avod.core.models.rpn_model_bev import RpnModelBev
 from avod.core import trainer
 
 tf.logging.set_verbosity(tf.logging.ERROR)
@@ -35,6 +37,15 @@ def train(model_config, train_config, dataset_config):
             model = AvodModel(model_config,
                               train_val_test=train_val_test,
                               dataset=dataset)
+        elif model_name == 'rpn_model_bev':
+            model = RpnModelBev(model_config,
+                             train_val_test=train_val_test,
+                             dataset=dataset)
+        elif model_name == 'avod_model_bev':
+            model = AvodModelBev(model_config,
+                              train_val_test=train_val_test,
+                              dataset=dataset)
+
         else:
             raise ValueError('Invalid model_name')
 

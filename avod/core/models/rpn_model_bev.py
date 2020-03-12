@@ -200,8 +200,8 @@ class RpnModelBev(model.DetectionModel):
         #            self._img_input_batches, self._img_pixel_size)
 
             # Summary Image
-            #tf.summary.image("rgb_image", self._img_preprocessed,
-            #                 max_outputs=2)
+        #    tf.summary.image("rgb_image", self._img_preprocessed,
+        #                     max_outputs=2)
 
         with tf.variable_scope('pl_labels'):
             self._add_placeholder(tf.float32, [None, 6],
@@ -297,6 +297,7 @@ class RpnModelBev(model.DetectionModel):
         # Setup feature extractors
         self._set_up_feature_extractors()
 
+        #feature map.
         bev_proposal_input = self.bev_bottleneck
         #img_proposal_input = self.img_bottleneck
 
@@ -537,7 +538,7 @@ class RpnModelBev(model.DetectionModel):
             tf.summary.image('bev_rpn_rois',
                              bev_input_roi_summary_images[-1],
                              max_outputs=rpn_mini_batch_size)
-
+        #just for easier visualization. not using img path.
         #with tf.variable_scope('img_rpn_rois'):
             # ROIs on image input
         #    mb_img_anchors_norm = tf.boolean_mask(self._img_anchors_norm_pl,
@@ -547,15 +548,15 @@ class RpnModelBev(model.DetectionModel):
         #        dtype=tf.int32)
 
             # Do test ROI pooling on mini batch
-         #   img_input_rois = tf.image.crop_and_resize(
-         #       self._img_preprocessed,
-         #       mb_img_anchors_norm,
-         #       mb_img_box_indices,
-         #       (32, 32))
+        #    img_input_rois = tf.image.crop_and_resize(
+        #        self._img_preprocessed,
+        #        mb_img_anchors_norm,
+        #        mb_img_box_indices,
+        #        (32, 32))
 
-         #   tf.summary.image('img_rpn_rois',
-         #                    img_input_rois,
-         #                    max_outputs=rpn_mini_batch_size)
+        #    tf.summary.image('img_rpn_rois',
+        #                     img_input_rois,
+        #                     max_outputs=rpn_mini_batch_size)
 
         # Ground Truth Tensors
         with tf.variable_scope('one_hot_classes'):

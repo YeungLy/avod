@@ -16,6 +16,9 @@ from avod.core import trainer_utils
 from avod.core.models.avod_model import AvodModel
 from avod.core.models.rpn_model import RpnModel
 
+from avod.core.models.avod_model_bev import AvodModelBev
+from avod.core.models.rpn_model_bev import RpnModelBev
+
 tf.logging.set_verbosity(tf.logging.INFO)
 
 KEY_SUM_RPN_OBJ_LOSS = 'sum_rpn_obj_loss'
@@ -32,7 +35,7 @@ KEY_SUM_AVOD_CLS_ACC = 'sum_avod_cls_accuracy'
 KEY_NUM_VALID_REG_SAMPLES = 'num_valid_reg_samples'
 
 
-class Evaluator:
+class EvaluatorBev:
 
     def __init__(self,
                  model,
@@ -64,7 +67,8 @@ class Evaluator:
 
         self.model_config = model.model_config
         self.model_name = self.model_config.model_name
-        self.full_model = isinstance(self.model, AvodModel)
+        self.full_model = isinstance(self.model, AvodModelBev)
+        #self.full_model = isinstance(self.model, AvodModel)
 
         self.paths_config = self.model_config.paths_config
         self.checkpoint_dir = self.paths_config.checkpoint_dir
@@ -237,8 +241,10 @@ class Evaluator:
                                         self._total_loss],
                                        feed_dict=feed_dict)
 
-                rpn_objectness_loss = eval_losses[RpnModel.LOSS_RPN_OBJECTNESS]
-                rpn_regression_loss = eval_losses[RpnModel.LOSS_RPN_REGRESSION]
+                rpn_objectness_loss = eval_losses[RpnModelBev.LOSS_RPN_OBJECTNESS]
+                #rpn_objectness_loss = eval_losses[RpnModel.LOSS_RPN_OBJECTNESS]
+                rpn_regression_loss = eval_losses[RpnModelBev.LOSS_RPN_REGRESSION]
+                #rpn_regression_loss = eval_losses[RpnModel.LOSS_RPN_REGRESSION]
 
                 self._update_rpn_losses(eval_rpn_losses,
                                         rpn_objectness_loss,
@@ -301,11 +307,12 @@ class Evaluator:
                 # Add times to list
                 total_feed_dict_time.append(feed_dict_time)
                 total_inference_time.append(inference_time)
- 
+
                 proposals_and_scores = \
                     self.get_rpn_proposals_and_scores(predictions)
                 predictions_and_scores = \
-                    self.get_avod_predicted_boxes_3d_and_scores(predictions,box_rep)
+                    self.get_avod_predicted_boxes_3d_and_scores(predictions,
+                                                                box_rep)
 
                 np.savetxt(rpn_file_path, proposals_and_scores, fmt='%.3f')
                 np.savetxt(avod_file_path, predictions_and_scores, fmt='%.5f')
@@ -354,12 +361,10 @@ class Evaluator:
                              .format(self.checkpoint_dir))
 
         # Load the latest checkpoints available
-        
         trainer_utils.load_checkpoints(self.checkpoint_dir,
                                        self._saver)
 
         num_checkpoints = len(self._saver.last_checkpoints)
-        print('checkpoints dir {}\n'.format(self.checkpoint_dir))
 
         if self.skip_evaluated_checkpoints:
             already_evaluated_ckpts = self.get_evaluated_ckpts(
@@ -545,14 +550,18 @@ class Evaluator:
         # for the full model, we expect a total of 4 losses
         assert (len(eval_losses) > 2)
         avod_classification_loss = \
-            eval_losses[AvodModel.LOSS_FINAL_CLASSIFICATION]
+            eval_losses[AvodModelBev.LOSS_FINAL_CLASSIFICATION]
+            #eval_losses[AvodModel.LOSS_FINAL_CLASSIFICATION]
         avod_regression_loss = \
-            eval_losses[AvodModel.LOSS_FINAL_REGRESSION]
+            eval_losses[AvodModelBev.LOSS_FINAL_REGRESSION]
+            #eval_losses[AvodModel.LOSS_FINAL_REGRESSION]
 
         avod_localization_loss = \
-            eval_losses[AvodModel.LOSS_FINAL_LOCALIZATION]
+            eval_losses[AvodModelBev.LOSS_FINAL_LOCALIZATION]
+            #eval_losses[AvodModel.LOSS_FINAL_LOCALIZATION]
         avod_orientation_loss = \
-            eval_losses[AvodModel.LOSS_FINAL_ORIENTATION]
+            eval_losses[AvodModelBev.LOSS_FINAL_ORIENTATION]
+            #eval_losses[AvodModel.LOSS_FINAL_ORIENTATION]
 
         sum_avod_cls_loss += avod_classification_loss
         sum_avod_reg_loss += avod_regression_loss
@@ -631,12 +640,15 @@ class Evaluator:
         # for the full model, we expect a total of 4 losses
         assert (len(eval_losses) > 2)
         avod_classification_loss = \
-            eval_losses[AvodModel.LOSS_FINAL_CLASSIFICATION]
+            eval_losses[AvodModelBev.LOSS_FINAL_CLASSIFICATION]
+            #eval_losses[AvodModel.LOSS_FINAL_CLASSIFICATION]
         avod_regression_loss = \
-            eval_losses[AvodModel.LOSS_FINAL_REGRESSION]
+            eval_losses[AvodModelBev.LOSS_FINAL_REGRESSION]
+            #eval_losses[AvodModel.LOSS_FINAL_REGRESSION]
 
         avod_localization_loss = \
-            eval_losses[AvodModel.LOSS_FINAL_LOCALIZATION]
+            eval_losses[AvodModelBev.LOSS_FINAL_LOCALIZATION]
+            #eval_losses[AvodModel.LOSS_FINAL_LOCALIZATION]
 
         sum_avod_cls_loss += avod_classification_loss
         sum_avod_reg_loss += avod_regression_loss
@@ -957,8 +969,10 @@ class Evaluator:
             global_step: Current global step that is being evaluated.
         """
 
-        objectness_pred = predictions[RpnModel.PRED_MB_OBJECTNESS]
-        objectness_gt = predictions[RpnModel.PRED_MB_OBJECTNESS_GT]
+        objectness_pred = predictions[RpnModelBev.PRED_MB_OBJECTNESS]
+        #objectness_pred = predictions[RpnModel.PRED_MB_OBJECTNESS]
+        objectness_gt = predictions[RpnModelBev.PRED_MB_OBJECTNESS_GT]
+        #objectness_gt = predictions[RpnModel.PRED_MB_OBJECTNESS_GT]
         objectness_accuracy = self.calculate_cls_accuracy(objectness_pred,
                                                           objectness_gt)
 
@@ -972,9 +986,11 @@ class Evaluator:
 
         if self.full_model:
             classification_pred = \
-                predictions[AvodModel.PRED_MB_CLASSIFICATION_SOFTMAX]
+                predictions[AvodModelBev.PRED_MB_CLASSIFICATION_SOFTMAX]
+                #predictions[AvodModel.PRED_MB_CLASSIFICATION_SOFTMAX]
             classification_gt = \
-                predictions[AvodModel.PRED_MB_CLASSIFICATIONS_GT]
+                predictions[AvodModelBev.PRED_MB_CLASSIFICATIONS_GT]
+                #predictions[AvodModel.PRED_MB_CLASSIFICATIONS_GT]
             classification_accuracy = self.calculate_cls_accuracy(
                 classification_pred, classification_gt)
 
@@ -1015,9 +1031,11 @@ class Evaluator:
                 8), containing the rpn proposal boxes and scores.
         """
 
-        top_anchors = predictions[RpnModel.PRED_TOP_ANCHORS]
+        top_anchors = predictions[RpnModelBev.PRED_TOP_ANCHORS]
+        #top_anchors = predictions[RpnModel.PRED_TOP_ANCHORS]
         top_proposals = box_3d_encoder.anchors_to_box_3d(top_anchors)
-        softmax_scores = predictions[RpnModel.PRED_TOP_OBJECTNESS_SOFTMAX]
+        softmax_scores = predictions[RpnModelBev.PRED_TOP_OBJECTNESS_SOFTMAX]
+        #softmax_scores = predictions[RpnModel.PRED_TOP_OBJECTNESS_SOFTMAX]
 
         proposals_and_scores = np.column_stack((top_proposals,
                                                 softmax_scores))
@@ -1042,9 +1060,11 @@ class Evaluator:
         if box_rep == 'box_3d':
             # Convert anchors + orientation to box_3d
             final_pred_anchors = predictions[
-                AvodModel.PRED_TOP_PREDICTION_ANCHORS]
+                AvodModelBev.PRED_TOP_PREDICTION_ANCHORS]
+                #AvodModel.PRED_TOP_PREDICTION_ANCHORS]
             final_pred_orientations = predictions[
-                AvodModel.PRED_TOP_ORIENTATIONS]
+                AvodModelBev.PRED_TOP_ORIENTATIONS]
+                #AvodModel.PRED_TOP_ORIENTATIONS]
 
             final_pred_boxes_3d = box_3d_encoder.anchors_to_box_3d(
                 final_pred_anchors, fix_lw=True)
@@ -1053,16 +1073,19 @@ class Evaluator:
         elif box_rep in ['box_8c', 'box_8co', 'box_4c']:
             # Predictions are in box_3d format already
             final_pred_boxes_3d = predictions[
-                AvodModel.PRED_TOP_PREDICTION_BOXES_3D]
+                AvodModelBev.PRED_TOP_PREDICTION_BOXES_3D]
+                #AvodModel.PRED_TOP_PREDICTION_BOXES_3D]
 
         elif box_rep == 'box_4ca':
             # boxes_3d from boxes_4c
             final_pred_boxes_3d = predictions[
-                AvodModel.PRED_TOP_PREDICTION_BOXES_3D]
+                AvodModelBev.PRED_TOP_PREDICTION_BOXES_3D]
+                #AvodModel.PRED_TOP_PREDICTION_BOXES_3D]
 
             # Predicted orientation from layers
             final_pred_orientations = predictions[
-                AvodModel.PRED_TOP_ORIENTATIONS]
+                AvodModelBev.PRED_TOP_ORIENTATIONS]
+                #AvodModel.PRED_TOP_ORIENTATIONS]
 
             # Calculate difference between box_3d and predicted angle
             ang_diff = final_pred_boxes_3d[:, 6] - final_pred_orientations
@@ -1111,7 +1134,8 @@ class Evaluator:
 
         # Append score and class index (object type)
         final_pred_softmax = predictions[
-            AvodModel.PRED_TOP_CLASSIFICATION_SOFTMAX]
+            AvodModelBev.PRED_TOP_CLASSIFICATION_SOFTMAX]
+            #AvodModel.PRED_TOP_CLASSIFICATION_SOFTMAX]
 
         # Find max class score index
         not_bkg_scores = final_pred_softmax[:, 1:]
@@ -1137,13 +1161,16 @@ class Evaluator:
                                                   box_rep):
 
         if box_rep in ['box_8c', 'box_8co']:
-            final_pred_box_corners = predictions[AvodModel.PRED_TOP_BOXES_8C]
+            final_pred_box_corners = predictions[AvodModelBev.PRED_TOP_BOXES_8C]
+            #final_pred_box_corners = predictions[AvodModel.PRED_TOP_BOXES_8C]
         elif box_rep in ['box_4c', 'box_4ca']:
-            final_pred_box_corners = predictions[AvodModel.PRED_TOP_BOXES_4C]
+            final_pred_box_corners = predictions[AvodModelBev.PRED_TOP_BOXES_4C]
+            #final_pred_box_corners = predictions[AvodModel.PRED_TOP_BOXES_4C]
 
         # Append score and class index (object type)
         final_pred_softmax = predictions[
-            AvodModel.PRED_TOP_CLASSIFICATION_SOFTMAX]
+            AvodModelBev.PRED_TOP_CLASSIFICATION_SOFTMAX]
+            #AvodModel.PRED_TOP_CLASSIFICATION_SOFTMAX]
 
         # Find max class score index
         not_bkg_scores = final_pred_softmax[:, 1:]

@@ -79,6 +79,10 @@ def save_predictions_in_kitti_format(model,
             continue
 
         all_predictions = np.loadtxt(predictions_file_path)
+        if len(all_predictions.shape) == 1 and all_predictions.shape[0] > 0:
+            all_predictions = all_predictions.reshape((1, -1))
+
+
 
         # # Swap l, w for predictions where w > l
         # swapped_indices = all_predictions[:, 4] > all_predictions[:, 3]
@@ -88,8 +92,14 @@ def save_predictions_in_kitti_format(model,
         # fixed_predictions[swapped_indices, 4] = all_predictions[
         #     swapped_indices, 3]
 
+        #no predictions for starter..
+        if len(all_predictions) == 0:
+            np.savetxt(kitti_predictions_3d_file_path, [])
+            continue
+
         score_filter = all_predictions[:, 7] >= score_threshold
         all_predictions = all_predictions[score_filter]
+
 
         # If no predictions, skip to next file
         if len(all_predictions) == 0:

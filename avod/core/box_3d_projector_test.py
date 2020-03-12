@@ -14,6 +14,7 @@ class Box3dProjectorTest(unittest.TestCase):
         box_points, box_points_norm = \
             box_3d_projector.project_to_bev(boxes_3d, [[-1, 1], [-1, 1]])
 
+
         expected_boxes = np.array(
             [[[0.5, 0.25],
               [-0.5, 0.25],
@@ -31,3 +32,6 @@ class Box3dProjectorTest(unittest.TestCase):
 
         for box, exp_box in zip(box_points, expected_boxes):
             np.testing.assert_allclose(box, exp_box, rtol=1E-5)
+
+if __name__ == "__main__":
+    unittest.main()

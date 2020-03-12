@@ -14,7 +14,10 @@ import avod.builders.config_builder_util as config_builder
 from avod.builders.dataset_builder import DatasetBuilder
 from avod.core.models.avod_model import AvodModel
 from avod.core.models.rpn_model import RpnModel
+from avod.core.models.avod_model_bev import AvodModelBev
+from avod.core.models.rpn_model_bev import RpnModelBev
 from avod.core.evaluator import Evaluator
+from avod.core.evaluator_bev import EvaluatorBev
 
 
 def inference(model_config, eval_config,
@@ -63,10 +66,28 @@ def inference(model_config, eval_config,
             model = RpnModel(model_config,
                              train_val_test=eval_config.eval_mode,
                              dataset=dataset)
+        elif model_name == 'avod_model_bev':
+            model = AvodModelBev(model_config,
+                              train_val_test=eval_config.eval_mode,
+                              dataset=dataset)
+        elif model_name == 'rpn_model_bev':
+            model = RpnModelBev(model_config,
+                             train_val_test=eval_config.eval_mode,
+                             dataset=dataset)
+ 
         else:
             raise ValueError('Invalid model name {}'.format(model_name))
 
-        model_evaluator = Evaluator(model, dataset_config, eval_config)
+        if model_name.find('bev') != -1:
+            model_evaluator = EvaluatorBev(model,
+                                    dataset_config,
+                                    eval_config)
+        else:
+            model_evaluator = Evaluator(model,
+                                    dataset_config,
+                                    eval_config)
+ 
+        #model_evaluator = Evaluator(model, dataset_config, eval_config)
         model_evaluator.run_latest_checkpoints()
 
 

@@ -63,7 +63,9 @@ class MiniBatchUtils:
         self.avod_mini_batch_size = avod_config.mini_batch_size
 
         # Setup paths
-        self.mini_batch_dir = avod.root_dir() + '/data/mini_batches/' + \
+        mini_batch_dir = self.config.mini_batch_dir
+        #self.mini_batch_dir = avod.root_dir() + '/data/mini_batches/' + \
+        self.mini_batch_dir = avod.root_dir() + '/data/' + mini_batch_dir + '/' + \
             'iou_{}/'.format(self.rpn_iou_type) + \
             dataset.name + '/' + dataset.cluster_split + '/' + \
             dataset.bev_source

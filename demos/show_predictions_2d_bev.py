@@ -3,7 +3,7 @@ import sys
 import time
 
 import numpy as np
-
+import cv2
 from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -20,12 +20,17 @@ from avod.core import box_3d_encoder
 from avod.core import box_3d_projector
 from avod.core import anchor_projector
 
+import kitti_bev_vis
+
 
 BOX_COLOUR_SCHEME = {
-    'Car': '#00FF00',           # Green
+    #'Car': '#00FF00',           # Green
+    'Car': '#FF0000',           # Green
     'Pedestrian': '#00FFFF',    # Teal
     'Cyclist': '#FFFF00'        # Yellow
 }
+
+#GREEN for Predictions, RED for Groundtruth
 
 
 def main():
@@ -41,11 +46,14 @@ def main():
     as well, shown as (score, IoU) above the detection.
     """
     dataset_config = DatasetBuilder.copy_config(DatasetBuilder.KITTI_VAL)
+    dataset_config.dataset_dir='~/Dataset/kitti/raw_data/2011_09_26/2011_09_26_drive_0001_sync/object_fmt/'
+    dataset_config.has_labels=True
 
     ##############################
     # Options
     ##############################
-    dataset_config.data_split = 'val_mini'
+    dataset_config.data_split = 'val'
+    #dataset_config.data_split = 'val_valid'
 
     fig_size = (10, 6.1)
 
@@ -57,7 +65,10 @@ def main():
 
     # Overwrite this to select a specific checkpoint
     global_step = None
-    checkpoint_name = 'avod_cars_bev_train_example'
+    #checkpoint_name = 'estimate3d'
+    #checkpoint_name = 'avod_cars_bev_train_example'
+    checkpoint_name = 'raw01'
+    #checkpoint_name = 'avod_cars_bev_train_example_old_range6step03'
     #checkpoint_name = 'avod_cars_example'
 
     # Drawing Toggles
@@ -65,13 +76,16 @@ def main():
     draw_overlaid = False
     draw_predictions_separate = True
 
+
     # Show orientation for both GT and proposals/predictions
     draw_orientations_on_prop = True
     draw_orientations_on_pred = True
 
     # Draw 2D bounding boxes
-    #draw_projected_2d_boxes = False
-    draw_projected_2d_boxes = True
+    draw_projected_2d_boxes = False
+    #draw_projected_2d_boxes = True
+
+    draw_projected_2d_boxes_bev = True
 
     # Save images for samples with no detections
     save_empty_images = True
@@ -99,7 +113,8 @@ def main():
     output_dir_base = predictions_dir + '/images_2d'
 
     # Get checkpoint step
-    steps = os.listdir(proposals_and_scores_dir)
+    steps = os.listdir(predictions_and_scores_dir)
+    #steps = os.listdir(proposals_and_scores_dir)
     steps.sort(key=int)
     print('Available steps: {}'.format(steps))
 
@@ -203,7 +218,9 @@ def main():
             predictions_and_scores = np.loadtxt(
                 predictions_and_scores_dir +
                 "/{}/{}.txt".format(global_step,
-                                    sample_name))
+                                    sample_name), ndmin=2)
+            if len(predictions_and_scores) == 0:
+                continue
 
             prediction_boxes_3d = predictions_and_scores[:, 0:7]
             prediction_scores = predictions_and_scores[:, 7]
@@ -248,7 +265,8 @@ def main():
 
         image_path = dataset.get_rgb_image_path(sample_name)
         image = Image.open(image_path)
-        image_size = image.size
+        image_size = image.size  #(width, heighth), but cv2.imread wil l be (height, width, channel)
+
 
         # Read the stereo calibration matrix for visualization
         stereo_calib = calib_utils.read_calibration(dataset.calib_dir,
@@ -300,11 +318,14 @@ def main():
                         box_3d, calib_p2,
                         truncate=True, image_size=image_size,
                         discard_before_truncation=False)
+                    
                     if img_box is not None:
                         image_filter.append(True)
                         final_boxes_2d.append(img_box)
                     else:
                         image_filter.append(False)
+
+                    
                 final_boxes_2d = np.asarray(final_boxes_2d)
                 final_prediction_boxes_3d = prediction_boxes_3d[image_filter]
                 final_scores = prediction_scores[image_filter]
@@ -388,6 +409,38 @@ def main():
                                         draw_iou,
                                         gt_classes,
                                         draw_orientations_on_pred)
+               
+                if draw_projected_2d_boxes_bev:
+                    point_cloud = dataset.kitti_utils.get_point_cloud('lidar', img_idx, image_size[::-1])
+                    ground_plane = dataset.kitti_utils.get_ground_plane('{:010}'.format(img_idx))
+                    bev = dataset.kitti_utils.create_bev_maps(point_cloud, ground_plane)
+                    density_map = np.array(bev.get('density_map'))
+ 
+                    label_boxes_gt = []
+                    for label in filtered_gt_objs:
+                        box = box_3d_encoder.object_label_to_box_3d(label)
+                        label_boxes_gt.append(box)
+                    label_boxes_gt = np.array(label_boxes_gt)
+                    
+                    boxes_2d_bev_gt=None
+                    if len(label_boxes_gt) > 0:
+                        _, boxes_2d_bev_gt = box_3d_projector.project_to_bev(label_boxes_gt, [[-40, 40], [0, 70]])
+
+                    label_boxes_pred = []
+                    for label in final_prediction_objs:
+                        box = box_3d_encoder.object_label_to_box_3d(label)
+                        label_boxes_pred.append(box)
+                    label_boxes_pred = np.array(label_boxes_pred)
+
+                    _, boxes_2d_bev_pred = box_3d_projector.project_to_bev(label_boxes_pred, [[-40, 40], [0, 70]])
+
+                                        
+                    density_map = kitti_bev_vis.draw_boxes(
+                                             density_map, 
+                                             boxes_2d_bev_gt, 
+                                             boxes_2d_bev_pred)
+                    cv2.imwrite('{}/{}_bev_density.png'.format(pred_out_dir, sample_name),density_map)
+
                 filename = pred_out_dir + '/' + sample_name + '.png'
                 plt.savefig(filename)
                 plt.close(pred_fig)

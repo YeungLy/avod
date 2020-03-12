@@ -12,6 +12,7 @@ from avod.builders.dataset_builder import DatasetBuilder
 from avod.core import anchor_projector
 from avod.core import box_3d_encoder
 from avod.core.anchor_generators import grid_anchor_3d_generator
+from avod.core.anchor_generators import pred_anchor_3d_generator
 from avod.core.label_cluster_utils import LabelClusterUtils
 
 
@@ -21,7 +22,8 @@ def main():
         in BEV and image space, and a 3D display of the anchors
     """
     dataset_config = DatasetBuilder.copy_config(
-        DatasetBuilder.KITTI_TRAIN)
+        DatasetBuilder.KITTI_UNITTEST)
+        #DatasetBuilder.KITTI_TRAIN)
     dataset_config.num_clusters[0] = 1
     dataset = DatasetBuilder.build_kitti_dataset(dataset_config)
 
@@ -29,7 +31,7 @@ def main():
     clusters, _ = label_cluster_utils.get_clusters()
 
     # Options
-    img_idx = 1
+    img_idx = 2
     # fake_clusters = np.array([[5, 4, 3], [6, 5, 4]])
     # fake_clusters = np.array([[3, 3, 3], [4, 4, 4]])
 
@@ -48,6 +50,19 @@ def main():
         anchor_3d_sizes=fake_clusters,
         anchor_stride=fake_anchor_stride,
         ground_plane=ground_plane)
+
+    new_anchor_3d_generator = pred_anchor_3d_generator.PredAnchor3dGenerator()
+    pred_anchors_dir = '/home/amax_yly/Dataset/kitti/training/estimate3d_use_gt'
+    #pred_anchor_boxes_3d = new_anchor_3d_generator.generate(
+    pred_anchor_boxes_3d = new_anchor_3d_generator.generate_aug(
+        sample_name=dataset.sample_names[img_idx],
+        class_name='Car', 
+        pred_anchors_dir=pred_anchors_dir)
+     
+    print('sample name: {}'.format(dataset.sample_names[img_idx]))
+
+    anchor_boxes_3d = pred_anchor_boxes_3d
+
     all_anchors = box_3d_encoder.box_3d_to_anchor(anchor_boxes_3d)
     end_time = time.time()
     print("Anchors generated in {} s".format(end_time - start_time))
